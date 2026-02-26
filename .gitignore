@@ -1,0 +1,10 @@
+.env
+results
+logs
+__pycache__
+gui
+# docker-compose.yml
+
+account.sql
+cookies
+user_agent.txt.gz

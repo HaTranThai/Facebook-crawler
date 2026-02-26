@@ -1,0 +1,88 @@
+services:
+  app_facebook_crawl:
+    container_name: facebook_crawl
+    depends_on:
+      dozzle:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+    working_dir: /app
+    environment:
+      KAFKA_HOST: "keyword-broker-1:9093,keyword-broker-2:9093"
+      KAFKA_TOPIC: "keyword"
+      MINIO_ENDPOINT: "http://192.167.117.30:9005"
+      MINIO_ACCESS_KEY: "facebook"
+      MINIO_SECRET_KEY: "mention-dfoaiuenueioa179d"
+      MINIO_BUCKET_NAME: "facebook"
+    restart: always
+    networks:
+      - kafka-p-sys
+      - minio-p-sys
+
+  app_facebook_update:
+    container_name: facebook_update
+    depends_on:
+      dozzle:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+    working_dir: /app
+    environment:
+      KAFKA_HOST: "keyword-broker-3:9093,keyword-broker-4:9093"
+      KAFKA_TOPIC: "keyword-update"
+      MINIO_ENDPOINT: "http://192.167.117.30:9005"
+      MINIO_ACCESS_KEY: "facebookupdate"
+      MINIO_SECRET_KEY: "mention-jdfalk0928ajd9jdk"
+      MINIO_BUCKET_NAME: "facebookupdate"
+    restart: always
+    networks:
+      - kafka-p-sys
+      - minio-p-sys
+
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: dozzle
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "8085:8080"
+    restart: unless-stopped
+
+  postgres:
+    container_name: postgres
+    build:
+      context: .
+      dockerfile: Dockerfile.Postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      PGDATA: /data/postgres
+    volumes:
+      - ./account.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - kafka-p-sys
+      - minio-p-sys
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  kafka-p-sys:
+    external: true
+  minio-p-sys:
+    external: true

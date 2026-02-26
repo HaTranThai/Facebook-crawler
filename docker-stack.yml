@@ -1,0 +1,79 @@
+version: "3.9"
+
+services:
+  facebook_crawl:
+    image: tranthaiha/facebook:latest
+    environment:
+      KAFKA_HOST: "keyword-broker-1:9093,keyword-broker-2:9093"
+      KAFKA_TOPIC: "keyword"
+      MINIO_ENDPOINT: "http://192.167.117.30:9005"
+      MINIO_ACCESS_KEY: "facebook"
+      MINIO_SECRET_KEY: "mention-dfoaiuenueioa179d"
+      MINIO_BUCKET_NAME: "facebook"
+    volumes:
+      - /home/facebook/var/log/facebook_crawl:/app/logs
+    networks:
+      - kafka-p-sys
+      - minio-p-sys
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 3
+        window: 60s
+      update_config:
+        parallelism: 1
+        delay: 10s
+      placement:
+        constraints:
+          - node.hostname == mention-fb-240
+
+  facebook_update:
+    image: tranthaiha/facebook:latest
+    environment:
+      KAFKA_HOST: "keyword-broker-3:9093,keyword-broker-4:9093"
+      KAFKA_TOPIC: "keyword-update"
+      MINIO_ENDPOINT: "http://192.167.117.30:9005"
+      MINIO_ACCESS_KEY: "facebookupdate"
+      MINIO_SECRET_KEY: "mention-jdfalk0928ajd9jdk"
+      MINIO_BUCKET_NAME: "facebookupdate"
+    volumes:
+      - /home/facebook/var/log/facebook_update:/app/logs
+    networks:
+      - kafka-p-sys
+      - minio-p-sys
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 3
+        window: 60s
+      update_config:
+        parallelism: 1
+        delay: 10s
+      placement:
+        constraints:
+          - node.hostname == mention-fb-240
+
+  dozzle:
+    image: amir20/dozzle:latest
+    ports:
+      - "8085:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      restart_policy:
+        condition: any
+      placement:
+        constraints:
+          - node.hostname == mention-fb-240
+
+networks:
+  kafka-p-sys:
+    external: true
+  minio-p-sys:
+    external: true
+  default:
+    name: facebook_stack_net

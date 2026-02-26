@@ -1,0 +1,41 @@
+# Core web scraping and HTTP libraries
+requests==2.32.3
+requests[socks]>=2.22.0
+beautifulsoup4>=4.10.0
+bs4==0.0.2
+
+# Environment and configuration
+python-dotenv
+pytz==2022.1
+
+# Web automation and browser control
+playwright
+selenium
+selenium-wire
+webdriver-manager
+
+# Database libraries
+boto3
+psycopg2-binary
+
+# Kafka and messaging
+kafka-python==2.0.2
+
+# Data processing and utilities
+pandas
+psutil==7.0.0
+tqdm
+pycld3
+langdetect
+
+# Async and concurrency
+aiofiles==23.2.1
+
+# Type hints and validation
+typing_extensions==4.11.0
+
+# Logging and utilities
+blinker==1.7.0
+
+# Retry mechanism
+tenacity~=9.0.0
